@@ -29,21 +29,26 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, ok bool
 		transferSum = float64(s.MinSumCommission)
 	}
 
-	if fromCard != nil && toCard != nil {
-		toCard.Balance = toCard.Balance + amount
-		fromCard.Balance = fromCard.Balance - amount
+	if fromCard == nil && toCard == nil {
 		ok = true
+		return
+	}
+
+	if fromCard != nil && toCard != nil {
 		total = amount
+
+		if float64(amount) >= float64(fromCard.Balance) {
+			ok = false
+		} else {
+			toCard.Balance = toCard.Balance + amount
+			fromCard.Balance = fromCard.Balance - amount
+			ok = true
+		}
 		return
 	}
 
 	if fromCard != nil && transferSum >= float64(fromCard.Balance) {
 		ok = false
-		return
-	}
-
-	if fromCard == nil && toCard == nil {
-		ok = true
 		return
 	}
 
