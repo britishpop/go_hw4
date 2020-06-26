@@ -1,6 +1,11 @@
 package transfer
 
-import "go_hw4/pkg/card"
+import (
+	"errors"
+	"go_hw4/pkg/card"
+)
+
+var ErrSourceCardBalance = errors.New("card balance is not enough to transfer")
 
 type Service struct {
 	CardSvc           *card.Service
@@ -16,7 +21,7 @@ func NewService(cardSvc *card.Service, percent float64, minSum int64) *Service {
 	}
 }
 
-func (s *Service) Card2Card(from, to string, amount int64) (total int64, ok bool) {
+func (s *Service) Card2Card(from, to string, amount int64) (total int64, err error) {
 
 	fromCard := s.CardSvc.SearchByNumber(from)
 	toCard := s.CardSvc.SearchByNumber(to)
@@ -30,7 +35,7 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, ok bool
 	}
 
 	if fromCard == nil && toCard == nil {
-		ok = true
+		err = nil
 		return
 	}
 
@@ -38,28 +43,28 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, ok bool
 		total = amount
 
 		if float64(amount) >= float64(fromCard.Balance) {
-			ok = false
+			err = ErrSourceCardBalance
 		} else {
 			toCard.Balance = toCard.Balance + amount
 			fromCard.Balance = fromCard.Balance - amount
-			ok = true
+			err = nil
 		}
 		return
 	}
 
 	if fromCard != nil && transferSum >= float64(fromCard.Balance) {
-		ok = false
+		err = ErrSourceCardBalance
 		return
 	}
 
 	if fromCard != nil {
 		fromCard.Balance = fromCard.Balance - int64(transferSum)
-		ok = true
+		err = nil
 	}
 
 	if toCard != nil {
 		toCard.Balance = toCard.Balance + total
-		ok = true
+		err = nil
 	}
 	return
 }
