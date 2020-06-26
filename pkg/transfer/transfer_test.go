@@ -72,7 +72,7 @@ func TestService_Card2Card(t *testing.T) {
 			fields:    fields{CardSvc: cardSvc, PercentCommission: 10, MinSumCommission: 10_00},
 			args:      args{from: "7532", to: "9678", amount: 500_00},
 			wantTotal: 550_00,
-			wantOk:    true,
+			wantOk:    false,
 		},
 	}
 	for _, tt := range tests {
