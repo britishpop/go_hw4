@@ -42,10 +42,6 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, err err
 	if err := Transfer(from, to); err != nil {
 		return 0, err
 	}
-
-	fromCard, okFrom := s.CardSvc.SearchByNumber(from)
-	toCard, okTo := s.CardSvc.SearchByNumber(to)
-
 	commission := s.PercentCommission / 100
 	transferSum := int64(float64(amount) + commission*float64(amount))
 	total = amount
@@ -53,6 +49,9 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, err err
 	if transferSum < s.MinSumCommission {
 		transferSum = s.MinSumCommission
 	}
+
+	fromCard, okFrom := s.CardSvc.SearchByNumber(from)
+	toCard, okTo := s.CardSvc.SearchByNumber(to)
 
 	if !okTo {
 		return transferSum, ErrTargetCardNotFound
