@@ -9,6 +9,8 @@ var (
 	ErrSourceCardBalanceNotEnough = errors.New("card balance is not enough to transfer")
 	ErrSourceCardNotFound         = errors.New("source card not found")
 	ErrTargetCardNotFound         = errors.New("target card not found")
+	ErrInvalidSourceCardNumber    = errors.New("invalid source card number")
+	ErrInvalidTargetCardNumber    = errors.New("invalid target card number")
 )
 
 type Service struct {
@@ -25,7 +27,21 @@ func NewService(cardSvc *card.Service, percent float64, minSum int64) *Service {
 	}
 }
 
+func Transfer(from, to string) error {
+	if !card.IsValid(from) {
+		return ErrInvalidSourceCardNumber
+	}
+	if !card.IsValid(to) {
+		return ErrInvalidTargetCardNumber
+	}
+	return nil
+}
+
 func (s *Service) Card2Card(from, to string, amount int64) (total int64, err error) {
+
+	if err := Transfer(from, to); err != nil {
+		return 0, err
+	}
 
 	fromCard, okFrom := s.CardSvc.SearchByNumber(from)
 	toCard, okTo := s.CardSvc.SearchByNumber(to)
