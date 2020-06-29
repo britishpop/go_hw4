@@ -5,7 +5,11 @@ import (
 	"go_hw4/pkg/card"
 )
 
-var ErrSourceCardBalance = errors.New("card balance is not enough to transfer")
+var (
+	ErrSourceCardBalanceNotEnough = errors.New("card balance is not enough to transfer")
+	ErrSourceCardNotFound         = errors.New("source card not found")
+	ErrTargetCardNotFound         = errors.New("target card not found")
+)
 
 type Service struct {
 	CardSvc           *card.Service
@@ -23,42 +27,38 @@ func NewService(cardSvc *card.Service, percent float64, minSum int64) *Service {
 
 func (s *Service) Card2Card(from, to string, amount int64) (total int64, err error) {
 
-	fromCard := s.CardSvc.SearchByNumber(from)
-	toCard := s.CardSvc.SearchByNumber(to)
+	fromCard, okFrom := s.CardSvc.SearchByNumber(from)
+	toCard, okTo := s.CardSvc.SearchByNumber(to)
+
+	if !okFrom {
+		return 0, ErrSourceCardNotFound
+	}
+
+	if !okTo {
+		return 0, ErrTargetCardNotFound
+	}
 
 	commission := s.PercentCommission / 100
-	transferSum := float64(amount) + commission*float64(amount)
-	total = int64(transferSum)
+	transferSum := int64(float64(amount) + commission*float64(amount))
+	total = transferSum
 
-	if transferSum < float64(s.MinSumCommission) {
-		transferSum = float64(s.MinSumCommission)
+	if transferSum < s.MinSumCommission {
+		transferSum = s.MinSumCommission
 	}
 
-	if fromCard == nil && toCard == nil {
+	if amount < fromCard.Balance {
+		toCard.Balance = toCard.Balance + amount
+		fromCard.Balance = fromCard.Balance - amount
 		err = nil
-		return
 	}
 
-	if fromCard != nil && toCard != nil {
-		total = amount
-
-		if float64(amount) >= float64(fromCard.Balance) {
-			err = ErrSourceCardBalance
-		} else {
-			toCard.Balance = toCard.Balance + amount
-			fromCard.Balance = fromCard.Balance - amount
-			err = nil
-		}
-		return
-	}
-
-	if fromCard != nil && transferSum >= float64(fromCard.Balance) {
-		err = ErrSourceCardBalance
+	if fromCard != nil && transferSum >= fromCard.Balance {
+		err = ErrSourceCardBalanceNotEnough
 		return
 	}
 
 	if fromCard != nil {
-		fromCard.Balance = fromCard.Balance - int64(transferSum)
+		fromCard.Balance = fromCard.Balance - transferSum
 		err = nil
 	}
 

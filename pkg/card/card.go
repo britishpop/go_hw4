@@ -1,17 +1,23 @@
 package card
 
+import "strings"
+
 type Service struct {
-	BankName string
-	Cards    []*Card
+	BankName   string
+	Cards      []*Card
+	BankPrefix string
 }
 
-func (s *Service) SearchByNumber(number string) *Card {
+func (s *Service) SearchByNumber(number string) (*Card, bool) {
+	if !strings.HasPrefix(number, s.BankPrefix) {
+		return nil, false
+	}
 	for _, card := range s.Cards {
 		if card.Number == number {
-			return card
+			return card, true
 		}
 	}
-	return nil
+	return nil, false
 }
 
 func (s *Service) AddCards(cards []*Card) {
