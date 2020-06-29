@@ -22,11 +22,11 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, ok bool
 	toCard := s.CardSvc.SearchByNumber(to)
 
 	commission := s.PercentCommission / 100
-	transferSum := float64(amount) + commission*float64(amount)
-	total = int64(transferSum)
+	transferSum := int64(float64(amount) + commission*float64(amount))
+	total = transferSum
 
-	if transferSum < float64(s.MinSumCommission) {
-		transferSum = float64(s.MinSumCommission)
+	if transferSum < s.MinSumCommission {
+		transferSum = s.MinSumCommission
 	}
 
 	if fromCard == nil && toCard == nil {
@@ -37,23 +37,20 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, ok bool
 	if fromCard != nil && toCard != nil {
 		total = amount
 
-		if float64(amount) >= float64(fromCard.Balance) {
-			ok = false
-		} else {
+		if amount < fromCard.Balance {
 			toCard.Balance = toCard.Balance + amount
 			fromCard.Balance = fromCard.Balance - amount
 			ok = true
 		}
-		return
 	}
 
-	if fromCard != nil && transferSum >= float64(fromCard.Balance) {
+	if fromCard != nil && transferSum >= fromCard.Balance {
 		ok = false
 		return
 	}
 
 	if fromCard != nil {
-		fromCard.Balance = fromCard.Balance - int64(transferSum)
+		fromCard.Balance = fromCard.Balance - transferSum
 		ok = true
 	}
 
