@@ -12,7 +12,7 @@ func main() {
 		Issuer:   "MasterCard",
 		Balance:  45_000_00,
 		Currency: "RUB",
-		Number:   "0808",
+		Number:   "5106217699990808",
 		Icon:     "https://dlpng.com/png/6794578",
 	}
 	visa := &card.Card{
@@ -20,17 +20,17 @@ func main() {
 		Issuer:   "Visa",
 		Balance:  3400_00,
 		Currency: "RUB",
-		Number:   "0002",
+		Number:   "5106218888990002",
 		Icon:     "https://...",
 	}
 
-	bank := card.NewService("Tinkoff")
+	bank := card.NewService("Tinkoff", "510621")
 	bankTransfers := transfer.NewService(bank, 0.5, 10_00)
 
-	bank.AddCards([]*card.Card{masterCard, visa})
+	bank.AddCards(masterCard, visa)
 
-	total1, ok1 := bankTransfers.Card2Card("0002", "0001", 3500_00)
-	total2, ok2 := bankTransfers.Card2Card("0808", "0002", 3500_00)
+	total1, ok1 := bankTransfers.Card2Card("5106218888990002", "5106217896540001", 3500_00)
+	total2, ok2 := bankTransfers.Card2Card("5106217699990808", "5106218888990002", 3500_00)
 
 	fmt.Println(bank)
 	fmt.Println(total1, ok1)

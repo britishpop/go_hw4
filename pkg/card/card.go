@@ -20,10 +20,8 @@ func (s *Service) SearchByNumber(number string) (*Card, bool) {
 	return nil, false
 }
 
-func (s *Service) AddCards(cards []*Card) {
-	for _, card := range cards {
-		s.Cards = append(s.Cards, card)
-	}
+func (s *Service) AddCards(cards ...*Card) {
+	s.Cards = append(s.Cards, cards...)
 }
 
 type Card struct {
@@ -35,6 +33,6 @@ type Card struct {
 	Icon     string
 }
 
-func NewService(bankName string) *Service {
+func NewService(bankName string, bankPrefix string) *Service {
 	return &Service{BankName: bankName}
 }

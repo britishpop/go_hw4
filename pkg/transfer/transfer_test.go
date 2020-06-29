@@ -17,13 +17,12 @@ func TestService_Card2Card(t *testing.T) {
 		amount int64
 	}
 
-	cardSvc := card.NewService("VTB")
-	cards := []*card.Card{{Balance: 100_00, Number: "0003"},
-		{Balance: 64700_00, Number: "0004"},
-		{Balance: 4000_00, Number: "0005"},
-		{Balance: 3950_00, Number: "0006"}}
+	cardSvc := card.NewService("Tinkoff", "510621")
 
-	cardSvc.AddCards(cards)
+	cardSvc.AddCards(&card.Card{Balance: 100_00, Number: "51062188880003"},
+		&card.Card{Balance: 64700_00, Number: "51062199990004"},
+		&card.Card{Balance: 4000_00, Number: "51062199990005"},
+		&card.Card{Balance: 3950_00, Number: "510621777770006"})
 
 	tests := []struct {
 		name      string
@@ -35,44 +34,44 @@ func TestService_Card2Card(t *testing.T) {
 		{
 			name:      "Карта своего банка -> Карта своего банка (денег достаточно)",
 			fields:    fields{CardSvc: cardSvc, PercentCommission: 10, MinSumCommission: 10_00},
-			args:      args{from: "0004", to: "0005", amount: 3000_00},
+			args:      args{from: "51062199990004", to: "51062199990005", amount: 3000_00},
 			wantTotal: 3000_00,
 			wantErr:   nil,
 		},
 		{
 			name:      "Карта своего банка -> Карта своего банка (денег недостаточно)",
 			fields:    fields{CardSvc: cardSvc, PercentCommission: 10, MinSumCommission: 10_00},
-			args:      args{from: "0003", to: "0005", amount: 400_00},
-			wantTotal: 400_00,
-			wantErr:   ErrSourceCardBalance,
+			args:      args{from: "51062188880003", to: "51062199990005", amount: 600_00},
+			wantTotal: 600_00,
+			wantErr:   ErrSourceCardBalanceNotEnough,
 		},
 		{
 			name:      "Карта своего банка -> Карта чужого банка (денег достаточно)",
 			fields:    fields{CardSvc: cardSvc, PercentCommission: 10, MinSumCommission: 10_00},
-			args:      args{from: "0006", to: "4896", amount: 100_00},
+			args:      args{from: "510621777770006", to: "48969999654387", amount: 100_00},
 			wantTotal: 110_00,
-			wantErr:   nil,
+			wantErr:   ErrTargetCardNotFound,
 		},
 		{
 			name:      "Карта своего банка -> Карта чужого банка (денег недостаточно)",
 			fields:    fields{CardSvc: cardSvc, PercentCommission: 10, MinSumCommission: 10_00},
-			args:      args{from: "0003", to: "9876", amount: 400_00},
+			args:      args{from: "51062188880003", to: "987673923923982", amount: 400_00},
 			wantTotal: 440_00,
-			wantErr:   ErrSourceCardBalance,
+			wantErr:   ErrTargetCardNotFound,
 		},
 		{
 			name:      "Карта чужого банка -> Карта своего банка",
 			fields:    fields{CardSvc: cardSvc, PercentCommission: 10, MinSumCommission: 10_00},
-			args:      args{from: "3854", to: "0003", amount: 50_00},
+			args:      args{from: "3854912828238238", to: "51062188880003", amount: 50_00},
 			wantTotal: 55_00,
-			wantErr:   nil,
+			wantErr:   ErrSourceCardNotFound,
 		},
 		{
 			name:      "Карта чужого банка -> Карта чужого банка",
 			fields:    fields{CardSvc: cardSvc, PercentCommission: 10, MinSumCommission: 10_00},
-			args:      args{from: "7532", to: "9678", amount: 500_00},
+			args:      args{from: "753292992392090", to: "967883823877833", amount: 500_00},
 			wantTotal: 550_00,
-			wantErr:   nil,
+			wantErr:   ErrTargetCardNotFound,
 		},
 	}
 	for _, tt := range tests {
