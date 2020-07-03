@@ -61,12 +61,13 @@ func (s *Service) Card2Card(from, to string, amount int64) (total int64, err err
 		return transferSum, ErrSourceCardNotFound
 	}
 
-	if amount < fromCard.Balance {
-		toCard.Balance = toCard.Balance + amount
-		fromCard.Balance = fromCard.Balance - amount
-		err = nil
-	} else {
+	if amount > fromCard.Balance {
 		err = ErrSourceCardBalanceNotEnough
+		return
 	}
+
+	toCard.Balance = toCard.Balance + total
+	fromCard.Balance = fromCard.Balance - amount
 	return
+
 }
