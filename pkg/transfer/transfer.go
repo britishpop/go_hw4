@@ -1,6 +1,17 @@
 package transfer
 
-import "go_hw4/pkg/card"
+import (
+	"errors"
+	"go_hw4/pkg/card"
+)
+
+var (
+	ErrSourceCardBalanceNotEnough = errors.New("card balance is not enough to transfer")
+	ErrSourceCardNotFound         = errors.New("source card not found")
+	ErrTargetCardNotFound         = errors.New("target card not found")
+	ErrInvalidSourceCardNumber    = errors.New("invalid source card number")
+	ErrInvalidTargetCardNumber    = errors.New("invalid target card number")
+)
 
 type Service struct {
 	CardSvc           *card.Service
@@ -16,47 +27,47 @@ func NewService(cardSvc *card.Service, percent float64, minSum int64) *Service {
 	}
 }
 
-func (s *Service) Card2Card(from, to string, amount int64) (total int64, ok bool) {
+func Transfer(from, to string) error {
+	if !card.IsValid(from) {
+		return ErrInvalidSourceCardNumber
+	}
+	if !card.IsValid(to) {
+		return ErrInvalidTargetCardNumber
+	}
+	return nil
+}
 
-	fromCard := s.CardSvc.SearchByNumber(from)
-	toCard := s.CardSvc.SearchByNumber(to)
+func (s *Service) Card2Card(from, to string, amount int64) (total int64, err error) {
 
+	if err := Transfer(from, to); err != nil {
+		return 0, err
+	}
 	commission := s.PercentCommission / 100
 	transferSum := int64(float64(amount) + commission*float64(amount))
-	total = transferSum
+	total = amount
 
 	if transferSum < s.MinSumCommission {
 		transferSum = s.MinSumCommission
 	}
 
-	if fromCard == nil && toCard == nil {
-		ok = true
+	fromCard, okFrom := s.CardSvc.SearchByNumber(from)
+	toCard, okTo := s.CardSvc.SearchByNumber(to)
+
+	if !okTo {
+		return transferSum, ErrTargetCardNotFound
+	}
+
+	if !okFrom {
+		return transferSum, ErrSourceCardNotFound
+	}
+
+	if amount > fromCard.Balance {
+		err = ErrSourceCardBalanceNotEnough
 		return
 	}
 
-	if fromCard != nil && toCard != nil {
-		total = amount
-
-		if amount < fromCard.Balance {
-			toCard.Balance = toCard.Balance + amount
-			fromCard.Balance = fromCard.Balance - amount
-			ok = true
-		}
-	}
-
-	if fromCard != nil && transferSum >= fromCard.Balance {
-		ok = false
-		return
-	}
-
-	if fromCard != nil {
-		fromCard.Balance = fromCard.Balance - transferSum
-		ok = true
-	}
-
-	if toCard != nil {
-		toCard.Balance = toCard.Balance + total
-		ok = true
-	}
+	toCard.Balance = toCard.Balance + total
+	fromCard.Balance = fromCard.Balance - amount
 	return
+
 }
